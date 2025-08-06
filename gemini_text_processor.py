@@ -52,10 +52,10 @@ class GeminiTextProcessor:
     
     def _call_gemini_api(self, api_key: str, prompt: str, max_tokens: int = 1000) -> str:
         """
-        调用Google Gemini API
+        调用Google Gemini 2.5 API
         """
         try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={api_key}"
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
             
             headers = {
                 "Content-Type": "application/json"
@@ -70,9 +70,27 @@ class GeminiTextProcessor:
                 "generationConfig": {
                     "maxOutputTokens": max_tokens,
                     "temperature": 0.7,
-                    "topP": 0.8,
-                    "topK": 40
-                }
+                    "topP": 0.95,
+                    "topK": 64
+                },
+                "safetySettings": [
+                    {
+                        "category": "HARM_CATEGORY_HARASSMENT",
+                        "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+                    },
+                    {
+                        "category": "HARM_CATEGORY_HATE_SPEECH",
+                        "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+                    },
+                    {
+                        "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                        "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+                    },
+                    {
+                        "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                        "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+                    }
+                ]
             }
             
             response = requests.post(url, headers=headers, json=data, timeout=30)
@@ -81,8 +99,14 @@ class GeminiTextProcessor:
             result = response.json()
             
             if "candidates" in result and len(result["candidates"]) > 0:
-                content = result["candidates"][0]["content"]["parts"][0]["text"]
-                return content.strip()
+                candidate = result["candidates"][0]
+                if "content" in candidate and "parts" in candidate["content"]:
+                    content = candidate["content"]["parts"][0]["text"]
+                    return content.strip()
+                elif "finishReason" in candidate:
+                    return f"API调用被阻止：{candidate.get('finishReason', '未知原因')}"
+                else:
+                    return "API调用失败：响应格式异常"
             else:
                 return "API调用失败：未返回有效内容"
                 
