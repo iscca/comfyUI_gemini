@@ -9,8 +9,7 @@ class GeminiTextProcessor:
     """
     
     def __init__(self):
-        self.type = "GeminiTextProcessor"
-        self.category = "text"
+        pass
         
     @classmethod
     def INPUT_TYPES(cls):
@@ -49,6 +48,7 @@ class GeminiTextProcessor:
     RETURN_TYPES = ("STRING", "STRING", "STRING")
     RETURN_NAMES = ("原始文本", "处理后文本", "英文翻译")
     FUNCTION = "process_text"
+    CATEGORY = "text"
     
     def _call_gemini_api(self, api_key: str, prompt: str, max_tokens: int = 1000) -> str:
         """
